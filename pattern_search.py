@@ -1,5 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
 from fastdtw import fastdtw
 from scipy.spatial.distance import euclidean
 import pandas as pd
