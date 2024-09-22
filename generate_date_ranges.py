@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-def generate_date_ranges(start_date: str, end_date: str, day_gap: int = 20) -> tuple:
+def generate_date_ranges(start_date: str, end_date: str, day_gap: int = 30) -> tuple:
     """
     시작 날짜와 종료 날짜를 기준으로 1년 주기의 start_dates와 end_dates 리스트를 생성합니다.
     day_gap: 두 날짜 사이의 간격을 의미합니다. 기본값은 20일입니다.

@@ -100,7 +100,7 @@ def plot_results_with_mean_and_actual_data(ticker, current_window, indexed_subse
     stock_data = yf.download(ticker, start=start_date, end=end_date)
     
     # 마지막 20일을 제외한 데이터로 예측
-    stock_data_without_last_20 = stock_data['Close'][:-20]  # 마지막 20일 제외
+    stock_data_without_last_20 = stock_data['Close'][:-30]  # 마지막 20일 제외
     
     # 날짜 범위 설정
     current_length = len(current_window)
@@ -108,7 +108,7 @@ def plot_results_with_mean_and_actual_data(ticker, current_window, indexed_subse
     total_length = current_length + future_length
 
     # 실제 마지막 20일 데이터
-    actual_20days_prices = stock_data['Close'][-20:]
+    actual_20days_prices = stock_data['Close'][-30:]
     actual_dates = range(current_length, total_length)
 
     # 각 예측된 주가지수 그리기 (0, 3, 6번째 인덱스만)

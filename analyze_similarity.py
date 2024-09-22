@@ -5,9 +5,18 @@ from data_processing import load_data
 from pattern_search import find_most_similar_pattern, plot_stock_patterns, plot_results_with_mean_and_actual_data
 
 def analyze_similarity(ticker, start_dates, end_dates, days_to, subsequent_days):
-    similarities = []  # 유사도 저장 리스트
+    similarities = []
+    today = pd.Timestamp('today')
 
     for start_date, end_date in zip(start_dates, end_dates):
+
+        start_date = pd.Timestamp(start_date)
+        end_date = start_date + pd.DateOffset(months=6)
+
+        if end_date > today:
+            print(f"End date {end_date} exceeds today's date {today}, stopping analysis.")
+            break
+
         data_with_ta, price_data_pct_change, data_eco, trend_features, vol_features = load_data(ticker, start_date, end_date)
 
         subsequent_prices_all = []

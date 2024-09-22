@@ -8,8 +8,8 @@ ticker = "MSFT"
 #ticker = "466400.KS" #Hana 1Q 25-08 Corp Bond(A+) Active ETF 
 
 days_to = [15, 20, 30]
-subsequent_days = 20 #예상 범위
-start_date = "2023-09-22"
+subsequent_days = 30 #예상 범위
+start_date = "2022-09-22"
 end_date = "2024-09-22"
 start_dates, end_dates = generate_date_ranges(start_date, end_date)
 
