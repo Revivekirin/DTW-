@@ -60,9 +60,6 @@ def find_most_similar_pattern(n_days, price_data_pct_change, trend_features, vol
                 min_distances = sorted(min_distances, key=lambda x: x[0])  # 거리 기준으로 정렬
                 break
 
-    # 유효한 패턴만 반환 (무한대 패턴 필터링)
-    #min_distances = [(distance, index) for distance, index in min_distances if index is not None and distance != float('inf')]
-
     if not min_distances:
         print(f"No valid patterns found for {n_days} days window.")
     
@@ -70,49 +67,31 @@ def find_most_similar_pattern(n_days, price_data_pct_change, trend_features, vol
 
 
 def plot_stock_patterns(ticker, price_data, price_data_pct_change, min_distances, n_days, subsequent_days, subsequent_prices_all):
-    #fig, axs = plt.subplots(1, 2, figsize=(30, 6))
-    #axs[0].plot(price_data, color='blue', label='Overall stock price')
-    #color_cycle = ['red', 'pink', 'purple', 'orange', 'cyan']
     subsequent_prices = []
 
     for i, (_, start_index) in enumerate(min_distances):
         
         # 인덱스 범위 검사
         if start_index is not None and start_index + n_days + subsequent_days <= len(price_data):
-            #color = color_cycle[i % len(color_cycle)]
             past_window_start_date = price_data.index[start_index]
             past_window_end_date = price_data.index[start_index + n_days + subsequent_days]
-            #axs[0].plot(price_data[past_window_start_date:past_window_end_date], color=color, label=f"Pattern {i+1}")
 
             # Store subsequent prices for median calculation
             subsequent_window = price_data_pct_change[start_index + n_days: start_index + n_days + subsequent_days].values
             subsequent_prices.append(subsequent_window)
             subsequent_prices_all.append(subsequent_window)
 
-    #axs[0].set_title(f'{ticker} Stock Price Data')
-    #axs[0].set_xlabel('Date')
-    #axs[0].set_ylabel('Stock Price')
-    #axs[0].legend()
 
     for i, (_, start_index) in enumerate(min_distances):
         if start_index is not None and start_index + n_days + subsequent_days <= len(price_data):
-            #color = color_cycle[i % len(color_cycle)]
             past_window = price_data_pct_change[start_index:start_index + n_days + subsequent_days]
             reindexed_current_window = (past_window + 1).cumprod() * 100
-            #axs[1].plot(range(n_days), reindexed_current_window[:n_days], color=color, linewidth=3, label="Current window")
 
             # Compute and plot the median subsequent prices
             subsequent_prices = np.array(subsequent_prices)
             median_subsequent_prices = np.median(subsequent_prices, axis=0)
             median_subsequent_prices_cum = (median_subsequent_prices + 1).cumprod() * reindexed_current_window.iloc[n_days - 1]
 
-            #axs[1].plot(range(n_days, n_days + subsequent_days), median_subsequent_prices_cum, color=color, linestyle='dashed', label='Median Subsequent Price Estimation')
-
-    #axs[1].set_title(f"Most similar {n_days}-day patterns in {ticker} stock price history (aligned, reindexed)")
-    #axs[1].set_xlabel("Days")
-    #axs[1].set_ylabel("Reindexed Price")
-    #axs[1].legend()
-    #plt.show()
 
 
 def plot_results_with_mean_and_actual_data(ticker, current_window, indexed_subsequent_prices, subsequent_mean_cum, 
@@ -132,21 +111,18 @@ def plot_results_with_mean_and_actual_data(ticker, current_window, indexed_subse
     # 실제 마지막 20일 데이터
     actual_20days_prices = stock_data['Close'][-20:]
     actual_dates = range(current_length, total_length)
-    #actual_dates = range(len(stock_data_without_last_20), len(stock_data_without_last_20) + len(actual_20days_prices))
 
     # 각 예측된 주가지수 그리기 (0, 3, 6번째 인덱스만)
     indices_to_plot = [0, 3, 6]
     mean_predicted_prices = np.zeros(subsequent_days)
     predictions_to_plot = []
 
-    #plt.figure(figsize=(15, 7))
 
     for idx in indices_to_plot:
         if idx < len(subsequent_prices_all):
             prices = subsequent_prices_all[idx]
             actual_indexed_price = (prices + 1).cumprod() * stock_data_without_last_20.iloc[-1]  # 마지막 주가 기준으로 예측값 계산
             predictions_to_plot.append(actual_indexed_price)
-            #plt.plot(range(current_length, total_length), actual_indexed_price, linestyle='dotted', label=f'Prediction {idx}')
             
             # 3개의 예측값 평균 계산
             mean_predicted_prices += actual_indexed_price
@@ -161,84 +137,6 @@ def plot_results_with_mean_and_actual_data(ticker, current_window, indexed_subse
     print(f"RMSE (Root Mean Squared Error): {rmse}")
     print(f"Differences: {differences}")
 
-    # 평균 예측 주가지수 그리기
-    #plt.plot(range(current_length, total_length), mean_predicted_prices, color='orange', linestyle='solid', linewidth=3, label='Mean Prediction')
-
-    # 실제 마지막 20일 데이터를 그래프에 추가
-    #plt.plot(actual_dates, actual_20days_prices, color='blue', label='Actual Stock Price (last 20 days)', linewidth=2)
-
-    # 그래프 설정
-    #plt.title(f"Predicted vs Actual Stock Price ({ticker})")
-    #plt.xlabel("Days")
-    #plt.ylabel("Stock Price")
-    #plt.xlim(0, total_length)
-    #plt.legend()
-    #plt.show()
 
     return mae, rmse, differences
-
-    # # 오른쪽 그래프: 재조정된 패턴과 예측값 비교
-    # plt.figure(figsize=(15, 7))
-    # plt.plot(range(current_length), current_window, color='k', linewidth=3, label="Current window")
-
-    # for label, indexed_price in indexed_subsequent_prices.items():
-    #     plt.plot(range(current_length, total_length), indexed_price, label=label)
-
-    # plt.plot(range(current_length, total_length), subsequent_mean_cum, color='green', linestyle='dashed', label='Median Subsequent')
-
-    # plt.title(f"Most similar patterns in stock price history (aligned, reindexed)")
-    # plt.xlabel("Days")
-    # plt.ylabel("Reindexed Price")
-    # plt.xlim(0, total_length)
-    # plt.legend()
-    # plt.show()
-
-
-
-
-def plot_results(current_window, indexed_subsequent_prices, subsequent_mean_cum, days_to, subsequent_days, subsequent_prices_all, actual_prices):
-    # 날짜 범위 설정
-    current_length = len(current_window)
-    future_length = subsequent_days
-    total_length = current_length + future_length
-
-    # 왼쪽 그래프: 예측 결과와 실제 주가 비교
-    plt.figure(figsize=(15, 7))
-    # 현재 윈도우 끝 날짜를 기준으로 x축을 설정
-    plt.plot(range(current_length), actual_prices[-current_length:], color='blue', label='Actual Stock Price')
-
-    # 각 예측된 주가지수 그리기 (0, 5, 10번째 인덱스만)
-    indices_to_plot = [0, 3, 6]  # 인덱스를 0, 5, 10으로 설정
-    for idx in indices_to_plot:
-        if idx < len(subsequent_prices_all):
-            prices = subsequent_prices_all[idx]
-            actual_indexed_price = (prices + 1).cumprod() * actual_prices.iloc[-1]
-            plt.plot(range(current_length, total_length), actual_indexed_price, linestyle='dotted', label=f'Actual Prediction {idx}')
-
-    plt.title("Predicted vs Actual Stock Price")
-    plt.xlabel("Days")
-    plt.ylabel("Stock Price")
-    plt.xlim(0, total_length)  # Set x-axis limits to match the right graph
-    plt.legend()
-    plt.show()
-
-    # 오른쪽 그래프: 재조정된 패턴과 예측값 비교
-    plt.figure(figsize=(15, 7))
-    plt.plot(range(current_length), current_window, color='k', linewidth=3, label="Current window")
-
-    for label, indexed_price in indexed_subsequent_prices.items():
-        plt.plot(range(current_length, total_length), indexed_price, label=label)
-
-    plt.plot(range(current_length, total_length), subsequent_mean_cum, color='green', linestyle='dashed', label='Median Subsequent')
-
-    plt.title("Most similar patterns in stock price history (aligned, reindexed)")
-    plt.xlabel("Days")
-    plt.ylabel("Reindexed Price")
-    plt.xlim(0, total_length)  # Set x-axis limits to match the left graph
-    plt.legend()
-    plt.show()
-
-
-
-
 
