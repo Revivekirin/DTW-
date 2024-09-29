@@ -14,15 +14,6 @@ korean_stocks = [
     "051910.KS"   # LG화학 (대형주)
 ]
 
-# us_stocks= [
-#     "NVDA",     # Nvidea (대형 기술주)
-#     "KO",       # 코카콜라 (대형 배당주)
-#     "JNJ",      # 존슨앤존스 (대형 배당주)
-#     "LLY",      # 일라일리리 (대형 바이오주)
-#     "GS",       # 골드만삭스 (대형 금융주)
-#     "ALTR",     # 알테어 엔지니어링 (중형 기술주)
-#     "IONQ",     # 아이온큐 (소형 기술주)
-# ]
 
 # 미국 소형주 8개와 대형주 2개 (yfinance ticker)
 us_stocks = [
@@ -36,6 +27,13 @@ us_stocks = [
     "TDOC",     # Teladoc Health, Inc.
     "AAPL",     # Apple Inc. (대형주)
     "MSFT",     # Microsoft Corporation (대형주)
+    "NVDA",     # Nvidea (대형 기술주)
+    "KO",       # 코카콜라 (대형 배당주)
+    "JNJ",      # 존슨앤존스 (대형 배당주)
+    "LLY",      # 일라일리리 (대형 바이오주)
+    "GS",       # 골드만삭스 (대형 금융주)
+    "ALTR",     # 알테어 엔지니어링 (중형 기술주)
+    "IONQ",     # 아이온큐 (소형 기술주)
 ]
 for idx in range(len(korean_stocks)):
     params(korean_stocks[idx])
