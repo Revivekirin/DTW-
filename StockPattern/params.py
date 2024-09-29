@@ -5,15 +5,22 @@ import numpy as np
 import pandas as pd
 
 def params(ticker):
-    # 사용자 입력
-    input_start_date = "2023-10-01"
-    input_end_date = "2023-10-15"
+    # 초기 날짜 설정
     pattern_search_start_date = "2023-09-22"
     pattern_search_end_date = "2024-09-22"
 
     # 데이터 로드
-    data_input, price_data_pct_change_input, data_eco_input, trend_features_input, vol_features_input = load_data(ticker, input_start_date, input_end_date)
     data_pattern, price_data_pct_change_pattern, data_eco_pattern, trend_features_pattern, vol_features_pattern = load_data(ticker, pattern_search_start_date, pattern_search_end_date)
+
+    # 데이터에서 최근 5일치를 추출
+    recent_data = data_pattern.tail(6)
+
+    # input_start_date와 input_end_date 재설정
+    input_start_date = recent_data.index[0].strftime('%Y-%m-%d')
+    input_end_date = recent_data.index[-1].strftime('%Y-%m-%d')
+
+    # 새로 로드한 데이터 사용
+    data_input, price_data_pct_change_input, data_eco_input, trend_features_input, vol_features_input = load_data(ticker, input_start_date, input_end_date)
 
 
     # 'numpy.ndarray'인 경우 'DataFrame'으로 변환
@@ -21,7 +28,7 @@ def params(ticker):
         if isinstance(data, np.ndarray):
             return pd.DataFrame(data)
         return data
-
+    
     data_input = convert_to_dataframe(data_input)
     price_data_pct_change_input = convert_to_dataframe(price_data_pct_change_input)
     data_eco_input = convert_to_dataframe(data_eco_input)
@@ -49,6 +56,7 @@ def params(ticker):
 
     # 입력 데이터 기간의 길이
     n_days = len(data_input)
+    print(data_input)
 
     # 입력 데이터에서 패턴 추출
     current_window = price_data_pct_change_input

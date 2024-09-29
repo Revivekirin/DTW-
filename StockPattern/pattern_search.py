@@ -54,7 +54,6 @@ def find_most_similar_pattern(
             current_vol, past_vol,
             current_eco, past_eco
         )
-
         # 가장 가까운 패턴 업데이트
         for i, (min_distance, _) in enumerate(min_distances):
             if distance < min_distance:

@@ -1,0 +1,8 @@
+yfinance
+pandas
+numpy
+matplotlib
+fastdtw
+scipy
+ta
+scikit-learn
