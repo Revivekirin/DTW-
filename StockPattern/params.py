@@ -1,5 +1,6 @@
 from data_processing import load_data
 from pattern_search import find_most_similar_pattern, plot_stock_patterns
+
 import numpy as np
 import pandas as pd
 
@@ -13,7 +14,7 @@ def convert_to_dataframe(data):
 def fill_missing_values(*dataframes):
     """모든 데이터프레임에 대해 결측치 채우기"""
     for df in dataframes:
-        df.ffill(inplace=True)  # 또는 bfill
+        df.bfill(inplace=True)  # 또는 bfill
     return dataframes
 
 def load_and_process_data(ticker, start_date, end_date):
@@ -34,16 +35,16 @@ def filter_data_by_mask(mask, *dataframes):
 
 def print_similar_patterns(data_pattern, min_distances, n_days):
     """유사한 패턴의 날짜와 거리를 출력"""
+    similar_patterns = []
     for distance, start_index in min_distances:
         if start_index is not None:
             start_date = data_pattern.index[start_index]
             end_date = data_pattern.index[start_index + n_days - 1]
             print(f"유사한 패턴 {start_index}: {start_date} ~ {end_date} (거리: {distance})")
+            similar_patterns.append((start_date, end_date, distance))
+    return similar_patterns
 
-def params(ticker):
-    # 초기 날짜 설정
-    pattern_search_start_date = "2023-09-22"
-    pattern_search_end_date = "2024-09-22"
+def params(ticker, pattern_search_start_date, pattern_search_end_date):
 
     # 데이터 로드
     data_pattern, price_data_pct_change_pattern, data_eco_pattern, trend_features_pattern, vol_features_pattern = \
@@ -85,8 +86,11 @@ def params(ticker):
     )
 
     print(f"입력된 기간과 유사한 패턴을 찾았습니다: {min_distances}")
-    print_similar_patterns(data_pattern, min_distances, n_days)
+    # 유사한 패턴의 시작일, 종료일, 거리 반환
+    similar_patterns = print_similar_patterns(data_pattern, min_distances, n_days)
 
-        
-    plot_stock_patterns(ticker, data_input, data_pattern_filtered, min_distances, n_days, data_pattern)
+    #그래프 그리기
+    plot_stock_patterns(ticker, data_input, data_pattern_filtered, min_distances, n_days, data_pattern)  
 
+    # 결과 반환
+    return similar_patterns
