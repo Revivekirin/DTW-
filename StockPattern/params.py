@@ -44,6 +44,7 @@ def print_similar_patterns(data_pattern, min_distances, n_days):
             similar_patterns.append((start_date, end_date, distance))
     return similar_patterns
 
+
 def params(ticker, pattern_search_start_date, pattern_search_end_date):
 
     # 데이터 로드
@@ -86,8 +87,24 @@ def params(ticker, pattern_search_start_date, pattern_search_end_date):
     )
 
     print(f"입력된 기간과 유사한 패턴을 찾았습니다: {min_distances}")
+
+    # 유사한 패턴의 시작일, 종료일, 거리, 예측 패턴 반환
+    similar_patterns = []
+    for distance, start_index in min_distances:
+        if start_index is not None:
+            start_date = data_pattern.index[start_index]
+            end_date = data_pattern.index[start_index + n_days - 1]
+            predicted_pattern = price_data_pct_change_pattern_filtered.iloc[start_index:start_index + n_days].values
+            similar_patterns.append({
+                'start_date': start_date,
+                'end_date': end_date,
+                'distance': distance,
+                'predicted_pattern': predicted_pattern
+            })
+            print(f"유사한 패턴 {start_index}: {start_date} ~ {end_date} (거리: {distance})")
+
     # 유사한 패턴의 시작일, 종료일, 거리 반환
-    similar_patterns = print_similar_patterns(data_pattern, min_distances, n_days)
+    # similar_patterns = print_similar_patterns(data_pattern, min_distances, n_days)
 
     #그래프 그리기
     plot_stock_patterns(ticker, data_input, data_pattern_filtered, min_distances, n_days, data_pattern)  

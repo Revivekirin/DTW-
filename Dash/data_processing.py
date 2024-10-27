@@ -66,33 +66,3 @@ def load_data(ticker, start_date, end_date):
     imputer = KNNImputer(n_neighbors=2, weights="uniform")
     data_eco = imputer.fit_transform(data_eco)
     return data_with_ta, price_data_pct_change, data_eco
-
-# def load_data(ticker, start_date, end_date):
-#     data = yf.download(ticker, start=start_date, end=end_date)
-#     data_with_ta = add_to_features(data)
-#     trend_features, vol_features = extract_and_reduce_features(data_with_ta, n_components=2)
-#     price_data_pct_change = data_with_ta['Close'].pct_change().dropna()
-#     data_ex = yf.download(["USDKRW=x", "^KS11", "^GSPC"], start=start_date, end=end_date)
-#     data_interest = yf.download("^FVX", start=start_date, end=end_date)
-
-#     # 결측치를 0으로 대체하는 전처리
-#     data_with_ta.fillna(0, inplace=True)
-#     price_data_pct_change.fillna(0, inplace=True)
-
-#     # Remove timezone information to make both indices tz-naive
-#     data_ex.index = data_ex.index.tz_localize(None)
-#     data_interest.index = data_interest.index.tz_localize(None)
-
-#     # 경제 데이터를 결합
-#     # 데이터 프레임 결합 후 결측치 보정
-#     data_eco = pd.concat([data_ex["Close"], data_interest['Close']], axis=1)
-    
-#     # 결측치 처리 (KNNImputer 사용)
-#     imputer = KNNImputer(n_neighbors=2, weights="uniform")
-#     data_eco = imputer.fit_transform(data_eco)
-
-#     # 데이터 내 결측치나 NaN을 0으로 대체
-#     data_eco = np.nan_to_num(data_eco)
-#     return data_with_ta, price_data_pct_change, data_eco, trend_features, vol_features
-
-

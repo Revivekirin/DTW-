@@ -45,44 +45,30 @@ def find_most_similar_pattern(n_days, price_data_pct_change, current_window):
     return min_distances
 
 
-# def find_most_similar_pattern(n_days, price_data_pct_change,subsequent_days):
-#     current_window = price_data_pct_change[-n_days:].values
-#     min_distances = [(float('inf'), -1) for _ in range(5)]
-#     for start_index in range(len(price_data_pct_change) - 2 * n_days - subsequent_days):
-#         past_window = price_data_pct_change[start_index:start_index + n_days].values
-#         distance = dtw_distance(current_window, past_window)
-#         for i, (min_distance, _) in enumerate(min_distances):
-#             if distance < min_distance:
-#                 min_distances[i] = (distance, start_index)
-#                 min_distances.sort(key=lambda x: x[0])  # keep the list sorted by distance
-#                 break
-#     return min_distances
 
+# def plot_stock_patterns(ticker, data_input, data_pattern, min_distances, n_days, data_with_ta):
+#     import matplotlib.pyplot as plt
+#     fig, ax = plt.subplots(figsize=(12, 6))
 
+#     # 입력 데이터 패턴
+#     ax.plot(data_input.index, data_input['Close'], color='blue', label='Input Data Pattern')
 
-def plot_stock_patterns(ticker, data_input, data_pattern, min_distances, n_days, data_with_ta):
-    import matplotlib.pyplot as plt
-    fig, ax = plt.subplots(figsize=(12, 6))
+#     # 실제 데이터
+#     ax.plot(data_with_ta.index, data_with_ta['Close'], color='black', label='Actual Data', alpha=0.3)
 
-    # 입력 데이터 패턴
-    ax.plot(data_input.index, data_input['Close'], color='blue', label='Input Data Pattern')
+#     # 유사한 패턴들
+#     color_cycle = ['red', 'green', 'orange', 'purple', 'cyan']
+#     for i, (_, start_index) in enumerate(min_distances):
+#         color = color_cycle[i % len(color_cycle)]
+#         pattern_indices = data_pattern.index[start_index:start_index + n_days]
+#         pattern_values = data_pattern['Close'].iloc[start_index:start_index + n_days]
+#         ax.plot(pattern_indices, pattern_values, color=color, linestyle='--', label=f'Similar Pattern {i+1}')
 
-    # 실제 데이터
-    ax.plot(data_with_ta.index, data_with_ta['Close'], color='black', label='Actual Data', alpha=0.3)
-
-    # 유사한 패턴들
-    color_cycle = ['red', 'green', 'orange', 'purple', 'cyan']
-    for i, (_, start_index) in enumerate(min_distances):
-        color = color_cycle[i % len(color_cycle)]
-        pattern_indices = data_pattern.index[start_index:start_index + n_days]
-        pattern_values = data_pattern['Close'].iloc[start_index:start_index + n_days]
-        ax.plot(pattern_indices, pattern_values, color=color, linestyle='--', label=f'Similar Pattern {i+1}')
-
-    ax.set_title(f"{ticker} comparison with similar pattern")
-    ax.set_xlabel('Date')
-    ax.set_ylabel('Stock Price')
-    ax.legend()
-    plt.show()
+#     ax.set_title(f"{ticker} comparison with similar pattern")
+#     ax.set_xlabel('Date')
+#     ax.set_ylabel('Stock Price')
+#     ax.legend()
+#     plt.show()
 
 
 
