@@ -5,6 +5,7 @@ from volatility import volatility
 
 def plot_stock_patterns(ticker, data_input, data_pattern, min_distances, n_days, data_with_ta):
     fig = go.Figure()
+    print(ticker)
 
     fig.add_trace(go.Scatter(
         x=data_input.index,

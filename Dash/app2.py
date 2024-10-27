@@ -14,12 +14,24 @@ app = dash.Dash(__name__)
 app.layout = html.Div(children=[
     html.H1(children='주식 가격 시각화'),
 
+    # Ticker 입력 필드 추가
+    html.Div(style={'marginBottom': '20px'}, children=[
+        html.Label("Ticker 입력: "),
+        dcc.Input(
+            id='ticker-input',
+            type='text',
+            placeholder='Enter ticker symbol',
+            value='',  # 초기값을 빈 문자열로 설정
+            style={'width': '200px'}
+        ),
+    ]),
+
     # 반투명 블록을 생성하여 다운로드할 데이터 범위 선택을 포함
     html.Div(style={
-        'backgroundColor': 'rgba(129, 129, 247, 0.8)',  # 배경색과 투명도
+        'backgroundColor': 'rgba(129, 129, 247, 0.5)',  # 배경색과 투명도
         'padding': '20px',  # 여백
         'borderRadius': '8px',  # 모서리 둥글기
-        'boxShadow': '0 4px 8px rgba(0, 0, 0, 0.1)',  # 그림자 효과
+        'boxShadow': '0 4px 8px rgba(0, 0.2, 0.2, 0.4)',  # 그림자 효과
         'marginBottom': '20px'  # 아래쪽 여백
     }, children=[
         html.Label("다운로드할 데이터 범위 선택: "),
@@ -34,10 +46,10 @@ app.layout = html.Div(children=[
 
     # 반투명 블록을 생성하여 최근 데이터 범위 선택을 포함
     html.Div(style={
-        'backgroundColor': 'rgba(129, 129, 247, 0.8)',  # 배경색과 투명도
+        'backgroundColor': 'rgba(129, 129, 247, 0.5)',  # 배경색과 투명도
         'padding': '20px',  # 여백
         'borderRadius': '8px',  # 모서리 둥글기
-        'boxShadow': '0 4px 8px rgba(0, 0, 0, 0.1)',  # 그림자 효과
+        'boxShadow': '0 4px 8px rgba(0, 0.2, 0.2, 0.4)',  # 그림자 효과
         'marginBottom': '20px'  # 아래쪽 여백
     }, children=[
         html.Label("분석할 최근 데이터 범위 선택: "),
@@ -77,16 +89,18 @@ figures = []
      Output('volatility-dropdown', 'options'),  
      Output('output-container', 'children')],
     [Input('update-button', 'n_clicks')],
-    [Input('download-date-range', 'start_date'),
+    [Input('ticker-input', 'value'),
+     Input('download-date-range', 'start_date'),
      Input('download-date-range', 'end_date'),
      Input('recent-date-range', 'start_date'),
      Input('recent-date-range', 'end_date')]
 )
-def update_graph(n_clicks, pattern_start_date, pattern_end_date, recent_start_date, recent_end_date):
+
+def update_graph(n_clicks, ticker, pattern_start_date, pattern_end_date, recent_start_date, recent_end_date):
     global figures
 
-    if pattern_start_date and pattern_end_date and recent_start_date and recent_end_date:
-        ticker='AAPL'
+    if ticker and pattern_start_date and pattern_end_date and recent_start_date and recent_end_date:
+        #ticker='AAPL'
         stock_data = yf.download(ticker, start=pattern_start_date, end=pattern_end_date)
 
         min_distances, data_pattern_filtered, data_input = params(
@@ -195,6 +209,4 @@ def update_volatility_graph(selected_range):
 # 애플리케이션 실행
 if __name__ == '__main__':
     app.run_server(debug=True)
-
-
 
