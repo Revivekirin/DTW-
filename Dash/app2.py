@@ -116,6 +116,8 @@ def update_graph(n_clicks, ticker, pattern_start_date, pattern_end_date, recent_
             data_with_ta=stock_data
         )
 
+        print(figure_pattern)
+
         pattern_graph = {
             'data': [
                 go.Scatter(
