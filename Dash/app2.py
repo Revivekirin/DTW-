@@ -3,9 +3,14 @@ from dash import dcc, html
 import plotly.graph_objs as go
 import pandas as pd
 import yfinance as yf
-from dash.dependencies import Input, Output
+from dash import MATCH
+from dash.dependencies import Input, Output, State
+from dash.exceptions import PreventUpdate
+
 from params import params, params_volatility
 from pattern_search_plotly import plot_stock_patterns, plot_high_volatility_ranges
+from news import get_news_summary
+from utils import determine_dates
 
 # Dash 앱 생성
 app = dash.Dash(__name__)
@@ -78,11 +83,22 @@ app.layout = html.Div(children=[
     html.Div([
         html.Div(dcc.Graph(id='stock-graph'), style={'flex': '1', 'padding': '10px'}),
         html.Div(id='volatility-graphs-container', style={'flex': '1', 'padding': '10px'})
-    ], style={'display': 'flex'})  # Flexbox를 사용하여 그래프를 나란히 배치
+    ], style={'display': 'flex'}),  # Flexbox를 사용하여 그래프를 나란히 배치
+
+        # 뉴스 요약 결과 표시 영역 추가
+    html.Div(id='news-summary-container', style={
+        'backgroundColor': '#f0f8ff',
+        'padding': '15px',
+        'borderRadius': '8px',
+        'marginTop': '20px',
+        'boxShadow': '0 4px 8px rgba(0, 0, 0, 0.2)',
+        'maxWidth': '600px',
+    }),
 ])
 
 
-figures = []
+figures = []  # plot_high_volatility_ranges 결과
+
 
 @app.callback(
     [Output('stock-graph', 'figure'),
@@ -115,8 +131,6 @@ def update_graph(n_clicks, ticker, pattern_start_date, pattern_end_date, recent_
             n_days=20, 
             data_with_ta=stock_data
         )
-
-        print(figure_pattern)
 
         pattern_graph = {
             'data': [
@@ -165,48 +179,78 @@ def update_graph(n_clicks, ticker, pattern_start_date, pattern_end_date, recent_
     
     return {}, [], "날짜 범위를 선택해 주세요."
 
+figure =[]   # volatility 결과중 selected_range의 결과
+
 @app.callback(
     Output('volatility-graphs-container', 'children'),
     [Input('volatility-dropdown', 'value')]
 )
 def update_volatility_graph(selected_range):
+    global figure
+
     if selected_range is not None:
         figure = figures[selected_range]
-
+        print(figure)
+        
         # Update the layout of the volatility graph
         figure['layout'].update({
-            'plot_bgcolor': '#8181F7',  # 배경 색상 변경
-            'paper_bgcolor': '#8181F7',  # 전체 배경 색상 변경
-            'font': dict(color='white'),  # 글자 색상
+            'plot_bgcolor': '#8181F7',
+            'paper_bgcolor': '#8181F7',
+            'font': dict(color='white'),
             'legend': {
-                'x': 0.5,  # 레전드를 그래프의 중앙에 위치
-                'y': -0.2,  # 레전드를 그래프 아래로 이동
+                'x': 0.5,
+                'y': -0.2,
                 'traceorder': 'normal',
-                'orientation': 'h',  # 수평으로 배치
-                'xanchor': 'center',  # x축 중앙 앵커
-                'yanchor': 'top'  # y축 상단 앵커
+                'orientation': 'h',
+                'xanchor': 'center',
+                'yanchor': 'top'
             },
-            'xaxis': {'showgrid': True, 'gridcolor': 'gray'},  # x축 그리드 설정
-            'yaxis': {'showgrid': True, 'gridcolor': 'gray'},  # y축 그리드 설정
-            'height': 500  # 그래프 높이 설정
+            'xaxis': {'showgrid': True, 'gridcolor': 'gray'},
+            'yaxis': {'showgrid': True, 'gridcolor': 'gray'},
+            'height': 500
         })
 
         # 라인과 마커 강조
         for data in figure['data']:
             data.update({
-                'line': dict(width=3),  # 선 두께 조정
-                'marker': dict(size=6)  # 마커 크기 조정
+                'line': dict(width=3),
+                'marker': dict(size=6)
             })
 
         return html.Div([
             dcc.Graph(
-                id=f"volatility-graph-{selected_range}",
+                id={'type': 'volatility-graph', 'index': selected_range},
                 figure=figure
-            )
-        ], style={'width': '100%'})  # 전체 가로 폭 100%로 설정
+            ),
+            html.Div(id={'type': 'news-summary-container', 'index': selected_range})  # MATCH를 사용하기 위해 수정
+        ], style={'width': '100%'})
+    
+    empty_figure = {'data': [], 'layout': {'title': 'Volatility Graph'}}
+    return html.Div([
+        dcc.Graph(id="volatility-graph-empty", figure=empty_figure)
+    ], style={'width': '100%'})
 
-    return []
 
+@app.callback(
+    Output({'type': 'news-summary-container', 'index': MATCH}, 'children'),  # 하나의 Output만 사용
+    Input({'type': 'volatility-graph', 'index': MATCH}, 'clickData'),
+    State('ticker-input', 'value')
+)
+def update_news_summary(selected_click_data, ticker):
+    if selected_click_data:
+        clicked_point = selected_click_data['points'][0]
+        selected_date = clicked_point['x']
+
+        try:
+            start_date, end_date = determine_dates(figure, selected_date)
+            print(start_date, end_date)
+
+            news_summary = get_news_summary(ticker, start_date=start_date, end_date=end_date)
+            return news_summary, ""
+        except Exception as e:
+            return f"뉴스 요약을 가져오는 중 오류 발생: {str(e)}", ""
+    
+    return "news summary가 존재하지 않습니다", ""
 
 # 애플리케이션 실행
 if __name__ == '__main__':

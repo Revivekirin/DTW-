@@ -114,3 +114,4 @@ def plot_high_volatility_ranges(min_distances, data_pattern, high_volatility_ran
 
 
 
+
