@@ -1,2 +1,1 @@
-[Watch the video]([https://www.youtube.com/watch?v=your_video_id](https://youtu.be/dhrZQVoKIVI))
-
+[Watch the video](https://youtu.be/dhrZQVoKIVI)
