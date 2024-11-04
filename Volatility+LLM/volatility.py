@@ -1,5 +1,8 @@
-import pandas as pd
-import numpy as np
+import yfinance as yf
+
+def fetch_stock_data(ticker, start_date, end_date):
+    stock_data = yf.download(ticker, start=start_date, end=end_date)
+    return stock_data
 
 def volatility(stock_data, window_size=6, threshold_multiplier=2):
     """
@@ -11,7 +14,7 @@ def volatility(stock_data, window_size=6, threshold_multiplier=2):
     - threshold_multiplier (float): 평균 이동 표준 편차에 대한 임계값을 설정하는 배수 (기본값: 2배).
 
     Returns:
-    - high_volatility_dates (list of lists): 변동성이 큰 구간의 날짜 리스트.
+    - high_volatility_periods (list of pd.DatetimeIndex): 변동성이 큰 구간의 날짜 범위 리스트.
     """
     
     # 이동 표준 편차 계산
@@ -31,14 +34,17 @@ def volatility(stock_data, window_size=6, threshold_multiplier=2):
             current_dates.append(date)  # 변동성이 큰 날을 추가
         else:
             if current_dates:
-                extended_dates = current_dates[-1]-pd.DateOffset(days=6)
-                high_volatility_periods.append(pd.date_range(start=extended_dates, end=current_dates[-1]))
-                current_dates=[]
+                # 고변동성 구간이 종료되면 날짜 범위를 생성하고 추가
+                start_date = current_dates[0]
+                end_date = current_dates[-1]
+                high_volatility_periods.append((start_date, end_date))
+                current_dates = []  # current_dates 초기화
 
-    # 마지막 구간이 끝나지 않은 경우 추가
+    # 마지막 고변동성 구간이 끝나지 않았을 경우 추가
     if current_dates:
-        extended_dates = current_dates[-1]-pd.DateOffset(days=6)
-        high_volatility_periods.append(pd.date_range(start=extended_dates, end=current_dates[-1]))
+        start_date = current_dates[0]
+        end_date = current_dates[-1]
+        high_volatility_periods.append((start_date, end_date))
 
     return high_volatility_periods
 

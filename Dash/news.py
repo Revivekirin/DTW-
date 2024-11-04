@@ -6,6 +6,13 @@ from datetime import datetime
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 from newspaper import Article 
 from typing import List, Optional, Dict
+import yfinance as yf
+import time
+
+def get_company_name(ticker:str)-> str:
+    stock=yf.Ticker(ticker)
+    return stock.info['longName']
+
 
 def filter_news_by_date(news_data: dict, start_date: Optional[datetime], end_date: Optional[datetime]) -> List[dict]:
     filtered_news = []
@@ -14,17 +21,17 @@ def filter_news_by_date(news_data: dict, start_date: Optional[datetime], end_dat
         print(pub_date)
         if (pub_date >= start_date) and (pub_date <= end_date):
             filtered_news.append(item)
-            print(filtered_news)
     return filtered_news
 
-def get_news_data(query: str, display: int = 20, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None) -> List[dict]:
+def get_news_data(query: str, display: int = 100, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None) -> List[dict]:
+    #company = (get_company_name(query) + "주가").encode('utf-8')
     encText = urllib.parse.quote(query)
     all_filtered_news = []
     start = 1
 
     while True:
         print("Fetching news data...")
-        url = f"https://openapi.naver.com/v1/search/news.json?query={encText}&display={display}&start={start}"
+        url = f"https://openapi.naver.com/v1/search/news.json?query={encText}&display={display}&start={start}&sort=date"
         request = urllib.request.Request(url)
         request.add_header("X-Naver-Client-Id", "gzXIxnMcjyEU2yijI6Qq")
         request.add_header("X-Naver-Client-Secret", "gBPFUxZTc6")
@@ -45,9 +52,20 @@ def get_news_data(query: str, display: int = 20, start_date: Optional[datetime] 
             print("Filtered news:", all_filtered_news)
 
             # 종료 조건
-            if len(all_filtered_news) >=display or len(news_data['items'])<display:
+            if len(all_filtered_news) >=display:
                 break
-            start += display
+
+            # 검색 시간대가 오래된 기사만 나오면 중단
+            last_pub_date = datetime.strptime(news_data['items'][-1]['pubDate'], "%a, %d %b %Y %H:%M:%S +0900")
+            print(news_data['items'][-1]['pubDate'])
+            if last_pub_date < start_date:
+                break
+            
+            # 다음 페이지로 이동
+            start += display  # start 값을 display로 증가시켜 페이지네이션 처리
+            
+            # 1초 지연
+            time.sleep(1)  # 다음 호출 전 1초 대기
 
         except json.JSONDecodeError as e:
             print(f"Failed to parse JSON response. Error: {e}")
@@ -56,10 +74,10 @@ def get_news_data(query: str, display: int = 20, start_date: Optional[datetime] 
             print(f"An error occurred: {e}")
             break
 
-    return all_filtered_news[:display]
+    return all_filtered_news[:3]
 
 
-def get_article_text(url: str) -> str:
+def get_article_text(url: str) -> str:     # dB 라벨링: title + 링크 추가 -> 긍정, 부정 분석 -> db저장
     """가사 본문을 크롤링"""
     try:
         article = Article(url)
@@ -80,6 +98,7 @@ def get_news_summary(query: str, start_date: Optional[datetime], end_date: Optio
         for news in filtered_news:
             article_text = get_article_text(news['originallink'])
             first_paragraph = article_text.split('\n\n')[0]
+            full_text+=news['title']
             full_text+=first_paragraph+"\n\n"
         
         tokenizer = AutoTokenizer.from_pretrained("noahkim/KoT5_news_summarization")

@@ -12,6 +12,28 @@ from pattern_search_plotly import plot_stock_patterns, plot_high_volatility_rang
 from news import get_news_summary
 from utils import determine_dates
 
+summary_style = {
+    "fontFamily": "Arial, sans-serif",
+    "fontSize": "16px",
+    "color": "#333333",
+    "backgroundColor": "#f4f6f9",
+    "padding": "15px",
+    "borderRadius": "8px",
+    "boxShadow": "0px 4px 8px rgba(0, 0, 0, 0.1)",
+    "whiteSpace": "pre-line"
+}
+
+loading_style = {
+    "fontFamily": "Arial, sans-serif",
+    "fontSize": "16px",
+    "color": "#888888",
+    "padding": "15px",
+    "borderRadius": "8px",
+    "backgroundColor": "#f4f6f9",
+    "whiteSpace": "pre-line"
+}
+
+
 # Dash 앱 생성
 app = dash.Dash(__name__)
 
@@ -70,7 +92,8 @@ app.layout = html.Div(children=[
     html.Button('데이터 다운로드 및 그래프 업데이트', id='update-button', n_clicks=0),
     html.Div(id='output-container', style={'marginTop': 20}),
     
-    # 드롭다운을 오른쪽 정렬하기 위한 Flexbox Div
+
+        # 드롭다운을 오른쪽 정렬하기 위한 Flexbox Div
     html.Div(style={'display': 'flex', 'justifyContent': 'flex-end', 'marginBottom': '20px'}, children=[
         dcc.Dropdown(id='volatility-dropdown',
                      options=[],
@@ -85,15 +108,17 @@ app.layout = html.Div(children=[
         html.Div(id='volatility-graphs-container', style={'flex': '1', 'padding': '10px'})
     ], style={'display': 'flex'}),  # Flexbox를 사용하여 그래프를 나란히 배치
 
-        # 뉴스 요약 결과 표시 영역 추가
-    html.Div(id='news-summary-container', style={
-        'backgroundColor': '#f0f8ff',
-        'padding': '15px',
-        'borderRadius': '8px',
-        'marginTop': '20px',
-        'boxShadow': '0 4px 8px rgba(0, 0, 0, 0.2)',
-        'maxWidth': '600px',
-    }),
+    # # 뉴스 요약 결과를 표시할 Div
+    # html.Div(id='news-summary-container', style={
+    #     'backgroundColor': '#f0f8ff',
+    #     'padding': '15px',
+    #     'borderRadius': '8px',
+    #     'marginTop': '20px',
+    #     'boxShadow': '0 4px 8px rgba(0, 0, 0, 0.2)',
+    #     'maxWidth': '530px',
+    #     'width': '100%',
+    # })
+
 ])
 
 
@@ -116,9 +141,8 @@ def update_graph(n_clicks, ticker, pattern_start_date, pattern_end_date, recent_
     global figures
 
     if ticker and pattern_start_date and pattern_end_date and recent_start_date and recent_end_date:
-        #ticker='AAPL'
-        stock_data = yf.download(ticker, start=pattern_start_date, end=pattern_end_date)
 
+        stock_data = yf.download(ticker, start=pattern_start_date, end=pattern_end_date)
         min_distances, data_pattern_filtered, data_input = params(
             ticker, pattern_start_date, pattern_end_date, recent_start_date, recent_end_date
         )
@@ -183,56 +207,58 @@ figure =[]   # volatility 결과중 selected_range의 결과
 
 @app.callback(
     Output('volatility-graphs-container', 'children'),
-    [Input('volatility-dropdown', 'value')]
+    [Input('volatility-dropdown', 'value')],
+    [State('ticker-input', 'value')]
 )
-def update_volatility_graph(selected_range):
+def update_volatility_graph(selected_range, ticker):
     global figure
 
-    if selected_range is not None:
-        figure = figures[selected_range]
-        print(figure)
+    if selected_range is None:
+        empty_figure = {'data': [], 'layout': {'title': 'Volatility Graph'}}
+        return html.Div([dcc.Graph(id="volatility-graph-empty", figure=empty_figure)], style={'width': '100%'})
         
-        # Update the layout of the volatility graph
-        figure['layout'].update({
-            'plot_bgcolor': '#8181F7',
-            'paper_bgcolor': '#8181F7',
-            'font': dict(color='white'),
-            'legend': {
-                'x': 0.5,
-                'y': -0.2,
-                'traceorder': 'normal',
-                'orientation': 'h',
-                'xanchor': 'center',
-                'yanchor': 'top'
-            },
-            'xaxis': {'showgrid': True, 'gridcolor': 'gray'},
-            'yaxis': {'showgrid': True, 'gridcolor': 'gray'},
-            'height': 500
+    figure = figures[selected_range]
+    print(figure)
+    
+    # Update the layout of the volatility graph
+    figure['layout'].update({
+        'plot_bgcolor': '#8181F7',
+        'paper_bgcolor': '#8181F7',
+        'font': dict(color='white'),
+        'legend': {
+            'x': 0.5,
+            'y': -0.2,
+            'traceorder': 'normal',
+            'orientation': 'h',
+            'xanchor': 'center',
+            'yanchor': 'top'
+        },
+        'xaxis': {'showgrid': True, 'gridcolor': 'gray'},
+        'yaxis': {'showgrid': True, 'gridcolor': 'gray'},
+        'height': 500
+    })
+
+    # 라인과 마커 강조
+    for data in figure['data']:
+        data.update({
+            'line': dict(width=3),
+            'marker': dict(size=6)
         })
 
-        # 라인과 마커 강조
-        for data in figure['data']:
-            data.update({
-                'line': dict(width=3),
-                'marker': dict(size=6)
-            })
-
-        return html.Div([
-            dcc.Graph(
-                id={'type': 'volatility-graph', 'index': selected_range},
-                figure=figure
-            ),
-            html.Div(id={'type': 'news-summary-container', 'index': selected_range})  # MATCH를 사용하기 위해 수정
-        ], style={'width': '100%'})
-    
-    empty_figure = {'data': [], 'layout': {'title': 'Volatility Graph'}}
     return html.Div([
-        dcc.Graph(id="volatility-graph-empty", figure=empty_figure)
+        dcc.Graph(
+            id={'type': 'volatility-graph', 'index': selected_range},
+            figure=figure
+        ),
+        html.Div(id={'type': 'news-summary-container', 'index': selected_range})  # MATCH를 사용하기 위해 수정
     ], style={'width': '100%'})
 
 
 @app.callback(
-    Output({'type': 'news-summary-container', 'index': MATCH}, 'children'),  # 하나의 Output만 사용
+    [
+        Output({'type': 'news-summary-container', 'index': MATCH}, 'children'),
+        Output({'type': 'news-summary-container', 'index': MATCH}, 'style')
+    ],
     Input({'type': 'volatility-graph', 'index': MATCH}, 'clickData'),
     State('ticker-input', 'value')
 )
@@ -243,14 +269,38 @@ def update_news_summary(selected_click_data, ticker):
 
         try:
             start_date, end_date = determine_dates(figure, selected_date)
-            print(start_date, end_date)
-
             news_summary = get_news_summary(ticker, start_date=start_date, end_date=end_date)
-            return news_summary, ""
+            print(news_summary)
+
+            if news_summary:
+                # 구조화되고 스타일이 적용된 뉴스 요약 생성
+                news_summary_html = html.Div(
+                    children=[
+                        html.H3("뉴스 요약", style={'textAlign': 'center', 'color': '#333'}),
+                        html.P(news_summary, style={'fontSize': '16px', 'lineHeight': '1.5'}),
+                        html.Div(
+                            style={
+                                'backgroundColor': '#f0f8ff',
+                                'padding': '15px',
+                                'borderRadius': '8px',
+                                'marginTop': '20px',
+                                'boxShadow': '0 4px 8px rgba(0, 0, 0, 0.2)',
+                                'maxWidth': '530px',
+                                'width': '100%',
+                            }
+                        )
+                    ],
+                    style={'margin': '20px'}
+                )
+                return news_summary_html
+            else:
+                return "뉴스 요약이 없습니다", loading_style
+
         except Exception as e:
-            return f"뉴스 요약을 가져오는 중 오류 발생: {str(e)}", ""
-    
-    return "news summary가 존재하지 않습니다", ""
+            return f"뉴스 요약을 가져오는 중 오류 발생: {str(e)}"
+
+    return "news summary가 존재하지 않습니다"
+
 
 # 애플리케이션 실행
 if __name__ == '__main__':
