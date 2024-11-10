@@ -130,13 +130,13 @@ def update_graph(n_clicks, ticker, pattern_start_date, pattern_end_date):
                     x_values.append((pd.Timestamp(scatter['x'][0]), pd.Timestamp(scatter['x'][-1])))
 
                 summaries = get_news_summaries_for_periods(x_values, ticker)
-
-                news_output=[]
-                for summary in summaries:
-                    news_output.append(html.Div([
+                news_output = [
+                    html.Div([
                         html.H4(f"High Volatility Period: {summary['start_date'].date()} to {summary['end_date'].date()}"),
-                        html.Pre(summary['summary'], style={'white-space': 'pre-wrap'})
-                    ]))
+                        html.Pre(f"Summary: {summary['summary']}", style={'white-space': 'pre-wrap'}),
+                        html.Pre(f"Label: {summary['label']}", style={'white-space': 'pre-wrap', 'color': 'blue'})  # Label 추가
+                    ]) for summary in summaries
+                ]
 
                 return pattern_graph, news_output
 

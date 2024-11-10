@@ -12,7 +12,7 @@ import os
 import torch
 import requests
 import json
-from translate import translate
+#from translate import translate
 
 torch.cuda.empty_cache()
 
@@ -51,15 +51,18 @@ def get_news_data(qur: str, start_date: Optional[datetime] = None, end_date: Opt
                 article_text = get_article_text(link)
                 paragraphs = article_text.split('\n\n') if article_text else ["", ""]  # 기본값으로 빈 문단을 설정
                 
-                # 첫 번째와 두 번째 문단을 가져옵니다.
-                first_paragraph = paragraphs[0] if len(paragraphs) > 0 else ""
-                second_paragraph = paragraphs[1] if len(paragraphs)>0 else ""
+                # # 첫 번째와 두 번째 문단을 가져옵니다.
+                # first_paragraph = paragraphs[0] if len(paragraphs) > 0 else ""
+                # second_paragraph = paragraphs[1] if len(paragraphs)>0 else ""
+                # third_paragraph = paragraphs[2] if len(paragraphs)>0 else ""
 
                 news_data.append({
                     'title': title,
                     'originallink': link,
-                    'first_paragraph': first_paragraph,
-                    'second_paragraph':second_paragraph,
+                    'paragraphs' :paragraphs,
+                    # 'first_paragraph': first_paragraph,
+                    # 'second_paragraph':second_paragraph,
+                    # 'third_paragraph':third_paragraph,
                 })
 
                 driver.close()
@@ -85,7 +88,7 @@ def get_article_text(url: str) -> str:
         return ""
 
 
-colab_url = 'https://2662-34-139-154-161.ngrok-free.app/data'
+colab_url = 'https://d30a-35-231-126-171.ngrok-free.app/data'
 
 from typing import List
 
@@ -103,10 +106,9 @@ def get_news_summaries_for_periods(high_volatility_periods: List[tuple], query: 
             # 뉴스의 제목과 본문을 결합하여 full_text 생성
             full_text = ""
             for news in news_data:
-                full_text +=  news['first_paragraph'] + news['second_paragraph']+ "\n\n"
-                
+                paragraphs = ' '.join(news['paragraphs']) if isinstance(news['paragraphs'], list) else news['paragraphs']
+                full_text += news['title'] + " " + paragraphs + "\n\n"
 
-            print(full_text)
             # Colab 서버로 full_text를 전송하여 요약을 요청
             response = requests.post(
                 colab_url, 
@@ -115,15 +117,15 @@ def get_news_summaries_for_periods(high_volatility_periods: List[tuple], query: 
                     'full_text': full_text,
                 }
             )
-
             # Colab 서버의 응답 확인 및 요약 데이터 저장
             if response.status_code == 200:
                 summary = response.json().get('summary', '')
-                summary = translate(summary)
+                label = response.json().get('label', '')
                 summaries.append({
                     'start_date': start_date,
                     'end_date': end_date,
-                    'summary': summary
+                    'summary': summary,
+                    'label': label
                 })
             else:
                 print(f"Failed to get summary from Colab server. Status code: {response.status_code}")
