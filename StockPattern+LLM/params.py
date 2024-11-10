@@ -1,12 +1,9 @@
-#from generate_date_ranges import generate_date_ranges
-from data_processing import load_data
 from pattern_search import find_most_similar_pattern
 import numpy as np
 import pandas as pd
-#from pattern_search_plotly import plot_stock_patterns
 from volatility import volatility
+from data_processing import load_data
 
-# 'numpy.ndarray'인 경우 'DataFrame'으로 변환
 def convert_to_dataframe(data):
     if isinstance(data, np.ndarray):
         return pd.DataFrame(data)
@@ -39,7 +36,6 @@ def params(ticker, pattern_search_start_date, pattern_search_end_date, input_sta
 
     # 입력 데이터 기간의 길이
     n_days = len(data_input)
-    print(n_days)
 
     # 입력 데이터에서 패턴 추출
     current_window = price_data_pct_change_input

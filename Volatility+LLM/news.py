@@ -1,5 +1,4 @@
 from datetime import datetime
-from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 from newspaper import Article 
 from typing import List, Optional
 from selenium import webdriver
@@ -11,16 +10,14 @@ from selenium.webdriver.support import expected_conditions as EC
 import time
 import os
 import torch
+import requests
+import json
+from translate import translate
 
 torch.cuda.empty_cache()
 
 # 환경 변수 설정
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
-
-tokenizer = AutoTokenizer.from_pretrained("noahkim/KoT5_news_summarization")
-model = AutoModelForSeq2SeqLM.from_pretrained("noahkim/KoT5_news_summarization")
-# device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
-# model = model.to(device)
 
 def get_news_data(qur: str, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None) -> List[dict]:
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
@@ -32,7 +29,11 @@ def get_news_data(qur: str, start_date: Optional[datetime] = None, end_date: Opt
         de = end_date.strftime('%Y.%m.%d') if end_date else ''
         url = f"https://search.naver.com/search.naver?where=news&query={query}&sm=tab_opt&sort=0&photo=0&field=0&pd=3&ds={ds}&de={de}&nso=so%3Ar%2Cp%3Afrom{ds}to{de}"
         driver.get(url)
-        time.sleep(2)
+
+        # 명시적 대기 사용
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, 'div.news_area'))
+        )
 
         news_items = driver.find_elements(By.CSS_SELECTOR, 'div.news_area')[:2]
 
@@ -52,11 +53,13 @@ def get_news_data(qur: str, start_date: Optional[datetime] = None, end_date: Opt
                 
                 # 첫 번째와 두 번째 문단을 가져옵니다.
                 first_paragraph = paragraphs[0] if len(paragraphs) > 0 else ""
+                second_paragraph = paragraphs[1] if len(paragraphs)>0 else ""
 
                 news_data.append({
                     'title': title,
                     'originallink': link,
-                    'first_paragraph': first_paragraph
+                    'first_paragraph': first_paragraph,
+                    'second_paragraph':second_paragraph,
                 })
 
                 driver.close()
@@ -82,82 +85,50 @@ def get_article_text(url: str) -> str:
         return ""
 
 
-def get_news_summary(query: str, start_date: Optional[datetime], end_date: Optional[datetime]) -> List[dict]:
-    try:
-        news_data = get_news_data(query, start_date=start_date, end_date=end_date)
+colab_url = 'https://2662-34-139-154-161.ngrok-free.app/data'
 
-        if not news_data:
-            print("뉴스 데이터가 없습니다.")
-            return []
+from typing import List
 
-        full_text = ""
-        for news in news_data:
-            full_text += news['title'] + "\n" + news['first_paragraph'] + "\n\n"
-        
-        prompt = f"""
-            당신은 금융 분야의 요약 전문가입니다. 
-
-            아래의 금융 관련 텍스트를 읽고, 다음 지침에 따라 요약해 주세요:
-            1. 전체 내용을 50단어 이내로 요약한 'summary' 필드를 작성해 주세요.
-            2. 핵심 내용을 5-10개 간결하게 정리해서 'key_points' 필드에 작성해 주세요.
-            3. 각 key_points 내용은 한 문장으로, 20단어를 넘지 않도록 해주세요.
-            4. 텍스트의 핵심 키워드와 관련된 단어나 개념을 10개 내외로 'tags' 필드에 추가해 주세요.
-            5. 전문 용어가 있다면 간단히 설명을 덧붙여 주세요.
-            6. 숫자나 통계가 있다면 반드시 포함시켜 주세요.
-            7. 요약은 객관적이고 중립적인 톤을 유지해 주세요.
-            8. 연관된 회사가 있으면 해당 회사와의 관계를 설명해 주세요.
-            9. {query}가 들어간 문장을 우선적으로 분석해 주시오.
-
-            응답은 반드시 아래의 JSON 형식을 따라 주세요: 
-            {{
-                "summary": "전체 내용 요약 (50단어 이내)",
-                "key_points": [
-                    "핵심 포인트 1 (20단어 이내)",
-                    "핵심 포인트 2 (20단어 이내)",
-                    "핵심 포인트 3 (20단어 이내)",
-                    "핵심 포인트 4 (20단어 이내)",
-                    "핵심 포인트 5 (20단어 이내)",
-                    ...
-                ],
-                "tags": ["태그1", "태그2", "태그3", ...]
-            }}
-
-            텍스트: 
-            {full_text}
-
-            위 지침에 따라 JSON 형식으로 요약해 주세요. 
-            """
-        inputs = tokenizer(prompt, return_tensors="pt", max_length=3400, truncation=True)
-        summary_ids = model.generate(inputs['input_ids'], max_length=1500, num_beams=4, early_stopping=True)
-        summary = tokenizer.decode(summary_ids[0], skip_special_tokens=True)
-
-        # # tokenizer로 입력을 생성하고, 'input_ids'를 MPS 디바이스로 이동
-        # inputs = tokenizer(prompt, return_tensors="pt", max_length=1024, truncation=True).to(device)
-        # print(inputs)
-        # # inputs = {key: value.to(device) for key, value in inputs.items()} 
-        # #print(inputs)
-
-        # 모델 생성
-        summary_ids = model.generate(inputs['input_ids'], max_length=1024, num_beams=4, early_stopping=True)        
-        # 생성된 텍스트 디코딩
-        summary = tokenizer.decode(summary_ids[0], skip_special_tokens=True)
-
-        return summary
-    except Exception as e:
-        print(f"Failed to generate summary: {e}")
-        return ""
-
-def get_news_summaries_for_volatility_periods(high_volatility_periods: List[tuple], query:str) -> List[dict]:
+def get_news_summaries_for_periods(high_volatility_periods: List[tuple], query: str) -> List[dict]:
     summaries = []
     for start_date, end_date in high_volatility_periods:
         try:
-            summary = get_news_summary(query, start_date, end_date)
-            summaries.append({
-                'start_date': start_date,
-                'end_date': end_date,
-                'summary': summary
-            })
-            print(summaries)
+            # 뉴스 데이터를 가져옵니다.
+            news_data = get_news_data(query, start_date=start_date, end_date=end_date)
+
+            if not news_data:
+                print("뉴스 데이터가 없습니다.")
+                continue
+
+            # 뉴스의 제목과 본문을 결합하여 full_text 생성
+            full_text = ""
+            for news in news_data:
+                full_text +=  news['first_paragraph'] + news['second_paragraph']+ "\n\n"
+                
+
+            print(full_text)
+            # Colab 서버로 full_text를 전송하여 요약을 요청
+            response = requests.post(
+                colab_url, 
+                json={
+                    'query': query,
+                    'full_text': full_text,
+                }
+            )
+
+            # Colab 서버의 응답 확인 및 요약 데이터 저장
+            if response.status_code == 200:
+                summary = response.json().get('summary', '')
+                summary = translate(summary)
+                summaries.append({
+                    'start_date': start_date,
+                    'end_date': end_date,
+                    'summary': summary
+                })
+            else:
+                print(f"Failed to get summary from Colab server. Status code: {response.status_code}")
+
         except Exception as e:
             print(f"Failed to get news summary for period {start_date} - {end_date}: {e}")
+
     return summaries

@@ -11,11 +11,11 @@ from params import params
 from plot_stock_pattern import plot_stock_patterns
 from volatility import volatility
 from news import get_news_summaries_for_periods, get_news_data
-from flask import Flask, request, jsonify
+
 
 # Dash 앱 생성
 app = dash.Dash(__name__)
-server = app.server
+# server = app.server
 
 app.layout = html.Div(style={'backgroundColor': '#f4f7fc', 'padding': '20px'}, children=[
     html.H1("Stock Price Visualization", style={'textAlign': 'center', 'color': '#2d3b5f'}),
@@ -175,4 +175,4 @@ def update_graph(n_clicks, ticker, pattern_start_date, pattern_end_date):
 
 # 애플리케이션 실행
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=8050)
+    app.run(debug=True, port=8050)

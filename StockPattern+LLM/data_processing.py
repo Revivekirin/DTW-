@@ -43,8 +43,6 @@ def extract_and_reduce_features(data, n_components=3):
     imputed_trend_features = imputer1.fit_transform(ta_features_trend)
     imputed_vol_features = imputer2.fit_transform(ta_features_vol)
 
-    # pca1, pca2 = PCA(n_components=n_components), PCA(n_components=n_components - 1)
-    # trend_features = pca1.fit_transform(imputed_trend_features)
     # 데이터의 샘플 수와 피처 수에 맞게 n_components를 조정
     n_components = min(2, imputed_trend_features.shape[0], imputed_trend_features.shape[1])
     pca1 = PCA(n_components=n_components)

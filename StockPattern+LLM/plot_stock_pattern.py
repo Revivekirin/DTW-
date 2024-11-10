@@ -51,13 +51,13 @@ def plot_stock_patterns(ticker, data_input, data_pattern, min_distances, n_days,
         xaxis_title='Date',
         yaxis_title="Stock Price",
         template="plotly_white",
-        plot_bgcolor='#8181F7',  # 배경 색상 변경
-        paper_bgcolor='#8181F7',  # 전체 배경 색상 변경
-        font=dict(color='white'),  # 글자 색상
-        legend=dict(x=0, y=1, traceorder='normal', orientation='h'),  # 레전드 위치 조정
-        height=500,  # 그래프 높이 설정
-        xaxis=dict(showgrid=True, gridcolor='gray'),  # x축 그리드 설정
-        yaxis=dict(showgrid=True, gridcolor='gray')   # y축 그리드 설정
+        plot_bgcolor='#8181F7',  
+        paper_bgcolor='#8181F7',  
+        font=dict(color='white'), 
+        legend=dict(x=0, y=1, traceorder='normal', orientation='h'), 
+        height=500,  
+        xaxis=dict(showgrid=True, gridcolor='gray'), 
+        yaxis=dict(showgrid=True, gridcolor='gray')  
     )
 
     return fig
