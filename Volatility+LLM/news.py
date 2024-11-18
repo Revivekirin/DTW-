@@ -52,17 +52,17 @@ def get_news_data(qur: str, start_date: Optional[datetime] = None, end_date: Opt
                 paragraphs = article_text.split('\n\n') if article_text else ["", ""]  # 기본값으로 빈 문단을 설정
                 
                 # # 첫 번째와 두 번째 문단을 가져옵니다.
-                # first_paragraph = paragraphs[0] if len(paragraphs) > 0 else ""
-                # second_paragraph = paragraphs[1] if len(paragraphs)>0 else ""
-                # third_paragraph = paragraphs[2] if len(paragraphs)>0 else ""
+                first_paragraph = paragraphs[0] if len(paragraphs) > 0 else ""
+                second_paragraph = paragraphs[1] if len(paragraphs)>0 else ""
+                third_paragraph = paragraphs[2] if len(paragraphs)>0 else ""
 
                 news_data.append({
                     'title': title,
                     'originallink': link,
-                    'paragraphs' :paragraphs,
-                    # 'first_paragraph': first_paragraph,
-                    # 'second_paragraph':second_paragraph,
-                    # 'third_paragraph':third_paragraph,
+                    # 'paragraphs' :paragraphs,
+                    'first_paragraph': first_paragraph,
+                    'second_paragraph':second_paragraph,
+                    'third_paragraph':third_paragraph,
                 })
 
                 driver.close()
@@ -88,7 +88,7 @@ def get_article_text(url: str) -> str:
         return ""
 
 
-colab_url = 'https://d30a-35-231-126-171.ngrok-free.app/data'
+colab_url = 'https://56da-34-81-54-32.ngrok-free.app/data'
 
 from typing import List
 
@@ -106,8 +106,10 @@ def get_news_summaries_for_periods(high_volatility_periods: List[tuple], query: 
             # 뉴스의 제목과 본문을 결합하여 full_text 생성
             full_text = ""
             for news in news_data:
-                paragraphs = ' '.join(news['paragraphs']) if isinstance(news['paragraphs'], list) else news['paragraphs']
-                full_text += news['title'] + " " + paragraphs + "\n\n"
+                first_paragraph = ' '.join(news['first_paragraph']) if isinstance(news['first_paragraph'], list) else news['first_paragraph']
+                second_paragraph = ' '.join(news['second_paragraph']) if isinstance(news['second_paragraph'], list) else news['second_paragraph']
+                third_paragraph = ' '.join(news['third_paragraph']) if isinstance(news['third_paragraph'], list) else news['third_paragraph']
+                full_text += news['title'] + first_paragraph+second_paragraph+third_paragraph+"\n\n"
 
             # Colab 서버로 full_text를 전송하여 요약을 요청
             response = requests.post(
