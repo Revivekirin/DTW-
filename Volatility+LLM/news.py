@@ -88,7 +88,7 @@ def get_article_text(url: str) -> str:
         return ""
 
 
-colab_url = 'https://56da-34-81-54-32.ngrok-free.app/data'
+colab_url = 'https://d4fe-34-105-61-94.ngrok-free.app/data'
 
 from typing import List
 

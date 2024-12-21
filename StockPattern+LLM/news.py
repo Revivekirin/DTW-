@@ -86,7 +86,7 @@ def get_article_text(url: str) -> str:
         return ""
 
 
-colab_url = 'https://3de2-34-74-138-59.ngrok-free.app/data'
+colab_url = 'https://d4fe-34-105-61-94.ngrok-free.app/data'
 
 def get_news_summaries_for_periods(high_volatility_periods: List[tuple], query: str) -> List[dict]:
     summaries = []
